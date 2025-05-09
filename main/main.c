@@ -20,7 +20,7 @@
 #define AUDIO_IN_PIN 27
 
 #define SAMPLE_RATE 8000
-#define DATA_LENGTH SAMPLE_RATE *6 // WAV_DATA_LENGTH //48000 
+#define DATA_LENGTH SAMPLE_RATE *4 // WAV_DATA_LENGTH //48000 
 #define FREQ 8000
 
 char audio[DATA_LENGTH];
@@ -81,7 +81,24 @@ void sin_task() {
     while (1) {
     }
 }
-
+    void wait_speak(){
+        while(1){
+            float sound = ((float)adc_read() / 4095.0f) * 3.3f;
+            if(sound > 2){
+                printf(" O Valor captado foi : %f",sound);
+                printf("Fala Detectada");
+                break;
+            }
+            sleep_ms(1);
+        }
+    }
+volatile bool can_print = true;
+bool stop_print_callback(repeating_timer_t *rt) {
+    can_print = false;
+    printf("Timer de impressão expirou (4s)\n");
+    return false; // não repete
+}
+repeating_timer_t print_timer;
 
 void mic_task() {
     adc_gpio_init(AUDIO_IN_PIN);
@@ -99,7 +116,7 @@ void mic_task() {
 
     while (1) {
         wav_position = 0;
-
+        wait_speak();
         if (!add_repeating_timer_us(1000000 / timer_0_hz,
             timer_0_callback,
             NULL,
@@ -112,10 +129,16 @@ void mic_task() {
 
         xSemaphoreGive(xSemaphorePlayInit);
 
-        for (int i = 0; i < DATA_LENGTH; i++) {
-            printf("%.2f\n", 3.3* (audio[i] / 255.0));
-        }
+        can_print = true;
+        add_repeating_timer_ms(4000, stop_print_callback, NULL, &print_timer);
 
+        for (int i = 0; i < DATA_LENGTH; i++) {
+            if (!can_print) {
+                printf("Encerrando impressão por tempo\n");
+                break;
+            }
+            printf("%.2f\n", 3.3 * (audio[i] / 255.0));
+        }
 
         if (xSemaphoreTake(xSemaphorePlayDone, portMAX_DELAY) == pdTRUE) {
             pwm_set_enabled(audio_pin_slice, false);
