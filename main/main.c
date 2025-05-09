@@ -16,12 +16,11 @@
 
 #include "ring.h"
 
-#define AUDIO_OUT_PIN 26
+#define AUDIO_OUT_PIN 28
 #define AUDIO_IN_PIN 27
 
-
 #define SAMPLE_RATE 8000
-#define DATA_LENGTH SAMPLE_RATE* 5
+#define DATA_LENGTH SAMPLE_RATE *6 // WAV_DATA_LENGTH //48000 
 #define FREQ 8000
 
 char audio[DATA_LENGTH];
