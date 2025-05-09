@@ -14,8 +14,6 @@
 #include "hardware/clocks.h"
 #include "hardware/adc.h"  // adc
 
-#include "ring.h"
-
 #define AUDIO_OUT_PIN 28
 #define AUDIO_IN_PIN 27
 
@@ -92,7 +90,7 @@ void wait_speak() {
             printf("Fala Detectada\n");
             break;
         }
-        sleep_ms(10);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
