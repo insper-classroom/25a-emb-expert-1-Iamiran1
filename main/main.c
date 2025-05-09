@@ -83,26 +83,19 @@ void sin_task() {
     }
 void wait_speak() {
     const float THRESHOLD_HIGH = 1.8f;
-    const float THRESHOLD_LOW  = 1.4f;
-    bool waiting_for_fall = false;
 
-    absolute_time_t start = get_absolute_time();
     while (1) {
         float sound = ((float)adc_read() / 4095.0f) * 3.3f;
         printf("Som lido: %.2f V\n", sound);
 
-        if (!waiting_for_fall && sound > THRESHOLD_HIGH) {
+        if (sound > THRESHOLD_HIGH) {
             printf("Fala Detectada\n");
-            waiting_for_fall = true;
-            break;  // remove isso se quiser repetir a lógica em loop
-        }
-
-        if (waiting_for_fall && sound < THRESHOLD_LOW) {
-            waiting_for_fall = false;  // pronto para detectar novamente
+            break;
         }
         sleep_ms(10);
     }
 }
+
 
 repeating_timer_t print_timer;
 
