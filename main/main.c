@@ -20,7 +20,7 @@
 #define AUDIO_IN_PIN 27
 
 #define SAMPLE_RATE 8000
-#define DATA_LENGTH SAMPLE_RATE *4 // WAV_DATA_LENGTH //48000 
+#define DATA_LENGTH SAMPLE_RATE *5// WAV_DATA_LENGTH //48000 
 #define FREQ 8000
 
 char audio[DATA_LENGTH];
@@ -80,24 +80,30 @@ void sin_task() {
 
     while (1) {
     }
-}
-    void wait_speak(){
-        while(1){
-            float sound = ((float)adc_read() / 4095.0f) * 3.3f;
-            if(sound > 2){
-                printf(" O Valor captado foi : %f",sound);
-                printf("Fala Detectada");
-                break;
-            }
-            sleep_ms(1);
-        }
     }
-volatile bool can_print = true;
-bool stop_print_callback(repeating_timer_t *rt) {
-    can_print = false;
-    printf("Timer de impressão expirou (4s)\n");
-    return false; // não repete
+void wait_speak() {
+    const float THRESHOLD_HIGH = 1.8f;
+    const float THRESHOLD_LOW  = 1.4f;
+    bool waiting_for_fall = false;
+
+    absolute_time_t start = get_absolute_time();
+    while (1) {
+        float sound = ((float)adc_read() / 4095.0f) * 3.3f;
+        printf("Som lido: %.2f V\n", sound);
+
+        if (!waiting_for_fall && sound > THRESHOLD_HIGH) {
+            printf("Fala Detectada\n");
+            waiting_for_fall = true;
+            break;  // remove isso se quiser repetir a lógica em loop
+        }
+
+        if (waiting_for_fall && sound < THRESHOLD_LOW) {
+            waiting_for_fall = false;  // pronto para detectar novamente
+        }
+        sleep_ms(10);
+    }
 }
+
 repeating_timer_t print_timer;
 
 void mic_task() {
@@ -129,16 +135,6 @@ void mic_task() {
 
         xSemaphoreGive(xSemaphorePlayInit);
 
-        can_print = true;
-        add_repeating_timer_ms(4000, stop_print_callback, NULL, &print_timer);
-
-        for (int i = 0; i < DATA_LENGTH; i++) {
-            if (!can_print) {
-                printf("Encerrando impressão por tempo\n");
-                break;
-            }
-            printf("%.2f\n", 3.3 * (audio[i] / 255.0));
-        }
 
         if (xSemaphoreTake(xSemaphorePlayDone, portMAX_DELAY) == pdTRUE) {
             pwm_set_enabled(audio_pin_slice, false);
