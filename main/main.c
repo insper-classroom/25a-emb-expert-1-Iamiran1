@@ -21,9 +21,9 @@
 #define DATA_LENGTH SAMPLE_RATE *5// WAV_DATA_LENGTH //48000 
 #define FREQ 8000
 
-char audio[DATA_LENGTH];
+volatile char audio[DATA_LENGTH];
 
-int wav_position = 0;
+volatile int wav_position = 0;
 
 SemaphoreHandle_t xSemaphorePlayInit;
 SemaphoreHandle_t xSemaphorePlayDone;
